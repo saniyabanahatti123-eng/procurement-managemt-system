@@ -1,8 +1,13 @@
 import express from "express";
+import authRoutes from "./routes/auth.routes.js"
 const app = express();
+
 
 //middleaware
 app.use(express.json());
+
+// user registration
+app.use("api/v1/auth", authRoutes)
 //basic route
 app.get("/", (req,res)=> {
     res.json({
