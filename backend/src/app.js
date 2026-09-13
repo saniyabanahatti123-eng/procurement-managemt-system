@@ -1,5 +1,9 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js"
+import userRoutes from "./routes/user.routes.js"
+import vendorRoutes from "./routes/vendor.route.js"
+import procurementRequestRoutes from "./routes/procurementRequest.routes.js" 
+import requestItemRoutes from "./routes/requestItem.routes.js";
 const app = express();
 
 
@@ -7,7 +11,26 @@ const app = express();
 app.use(express.json());
 
 // user registration
-app.use("api/v1/auth", authRoutes)
+app.use("/api/v1/auth", authRoutes)
+
+// user route
+app.use("/api/v1/user" , userRoutes)
+
+// vendor route
+app.use("/api/v1/vendors", vendorRoutes);
+
+// procurementRequest route
+app.use(
+    "/api/v1/procurement-requests",
+    procurementRequestRoutes
+);
+
+// requestItem route
+app.use(
+    "/api/v1/procurement-requests",
+    requestItemRoutes
+);
+
 //basic route
 app.get("/", (req,res)=> {
     res.json({
