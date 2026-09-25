@@ -141,3 +141,102 @@ export const createPurchaseOrder = async (req, res) => {
         });
     }
 };
+
+export const getAllPurchaseOrders = async (req, res) => {
+    try {
+        const purchaseOrders = await PurchaseOrder.find()
+            .populate("procurementRequest")
+            .populate("quotation")
+            .populate("vendor")
+            .populate("createdBy", "name email role")
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            count: purchaseOrders.length,
+            purchaseOrders
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch purchase orders",
+            error: error.message
+        });
+    }
+};
+
+export const getPurchaseOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const purchaseOrder = await PurchaseOrder.findById(id)
+            .populate("procurementRequest")
+            .populate("quotation")
+            .populate("vendor")
+            .populate("createdBy", "name email role");
+
+        if (!purchaseOrder) {
+            return res.status(404).json({
+                message: "Purchase order not found"
+            });
+        }
+
+        return res.status(200).json({
+            purchaseOrder
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch purchase order",
+            error: error.message
+        });
+    }
+};
+
+export const updatePurchaseOrderStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!["issued", "cancelled"].includes(status)) {
+            return res.status(400).json({
+                message: "Invalid purchase order status"
+            });
+        }
+
+        const purchaseOrder = await PurchaseOrder.findById(id);
+
+        if (!purchaseOrder) {
+            return res.status(404).json({
+                message: "Purchase order not found"
+            });
+        }
+
+        if (purchaseOrder.status === "cancelled") {
+            return res.status(400).json({
+                message:
+                    "Cancelled purchase order cannot be updated"
+            });
+        }
+
+        if (
+            purchaseOrder.status === "issued" &&
+            status === "issued"
+        ) {
+            return res.status(400).json({
+                message: "Purchase order is already issued"
+            });
+        }
+
+        purchaseOrder.status = status;
+
+        await purchaseOrder.save();
+
+        return res.status(200).json({
+            message: `Purchase order ${status} successfully`,
+            purchaseOrder
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to update purchase order status",
+            error: error.message
+        });
+    }
+};
