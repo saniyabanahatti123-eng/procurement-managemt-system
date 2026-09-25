@@ -4,6 +4,9 @@ import userRoutes from "./routes/user.routes.js"
 import vendorRoutes from "./routes/vendor.route.js"
 import procurementRequestRoutes from "./routes/procurementRequest.routes.js" 
 import requestItemRoutes from "./routes/requestItem.routes.js";
+import authMiddleware from "./middleware/auth.middleware.js";
+import authorizaRoles from "./middleware/role.middleware.js";
+import purchaseOrderRoutes from "./routes/purchaseOrder.routes.js"
 const app = express();
 
 
@@ -39,4 +42,10 @@ app.get("/", (req,res)=> {
     });
 });
 
+app.use(
+    "/api/v1/purchase-orders",
+    authMiddleware,
+    authorizaRoles("procurement" , "admin"),
+    purchaseOrderRoutes
+);
 export default app;

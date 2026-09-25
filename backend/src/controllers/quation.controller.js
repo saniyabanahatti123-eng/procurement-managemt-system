@@ -128,3 +128,127 @@ export const uploadQuotationDocument = async (req, res) => {
         });
     }
 };
+
+export const submitQuotationForApproval = async (req, res) => {
+    try {
+        const quotation = await Quotation.findById(req.params.id);
+
+        if (!quotation) {
+            return res.status(404).json({
+                message: "Quotation not found"
+            });
+        }
+
+        if (!quotation.isConfirmed) {
+            return res.status(400).json({
+                message: "Only confirmed quotations can be submitted for approval"
+            });
+        }
+
+        if (quotation.approvalStatus === "pending") {
+            return res.status(400).json({
+                message: "Quotation is already pending approval"
+            });
+        }
+
+        if (quotation.approvalStatus === "approved") {
+            return res.status(400).json({
+                message: "Quotation is already approved"
+            });
+        }
+
+        quotation.approvalStatus = "pending";
+        quotation.rejectionReason = null;
+
+        await quotation.save();
+
+        return res.status(200).json({
+            message: "Quotation submitted for approval",
+            quotation
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to submit quotation for approval",
+            error: error.message
+        });
+    }
+};
+
+// approval quotation
+export const approveQuotation = async (req, res) => {
+    try {
+        const quotation = await Quotation.findById(req.params.id);
+
+        if (!quotation) {
+            return res.status(404).json({
+                message: "Quotation not found"
+            });
+        }
+
+        if (quotation.approvalStatus !== "pending") {
+            return res.status(400).json({
+                message: "Only pending quotations can be approved"
+            });
+        }
+
+        quotation.approvalStatus = "approved";
+        quotation.approvedBy = req.user._id;
+        quotation.approvedAt = new Date();
+        quotation.rejectionReason = null;
+
+        await quotation.save();
+
+        return res.status(200).json({
+            message: "Quotation approved successfully",
+            quotation
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to approve quotation",
+            error: error.message
+        });
+    }
+};
+
+export const rejectQuotation = async (req, res) => {
+    try {
+        const { reason } = req.body;
+
+        const quotation = await Quotation.findById(req.params.id);
+
+        if (!quotation) {
+            return res.status(404).json({
+                message: "Quotation not found"
+            });
+        }
+
+        if (quotation.approvalStatus !== "pending") {
+            return res.status(400).json({
+                message: "Only pending quotations can be rejected"
+            });
+        }
+
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({
+                message: "Rejection reason is required"
+            });
+        }
+
+        quotation.approvalStatus = "rejected";
+        quotation.approvedBy = null;
+        quotation.approvedAt = null;
+        quotation.rejectionReason = reason.trim();
+
+        await quotation.save();
+
+        return res.status(200).json({
+            message: "Quotation rejected successfully",
+            quotation
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to reject quotation",
+            error: error.message
+        });
+    }
+};

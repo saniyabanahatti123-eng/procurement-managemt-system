@@ -1,7 +1,11 @@
 import express from "express";
 
 import {
-    createQuotation
+    createQuotation,
+    uploadQuotationDocument,
+    submitQuotationForApproval,
+    approveQuotation,
+    rejectQuotation
 } from "../controllers/quation.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -79,5 +83,29 @@ router.patch(
     authMiddleware,
     authorizeRoles("procurement", "admin"),
     confirmQuotation
+);
+
+// submit approval
+router.patch(
+    "/:id/submit-approval",
+    authMiddleware,
+    authorizeRoles("procurement", "admin"),
+    submitQuotationForApproval
+);
+
+// approval
+router.patch(
+    "/:id/approve",
+    authMiddleware,
+    authorizeRoles("admin", "approver"),
+    approveQuotation
+);
+
+//rejected
+router.patch(
+    "/:id/reject",
+    authMiddleware,
+    authorizeRoles("admin", "approver"),
+    rejectQuotation
 );
 export default router;

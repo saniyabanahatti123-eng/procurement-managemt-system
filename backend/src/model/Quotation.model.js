@@ -185,6 +185,28 @@ isConfirmed: {
 confirmedAt: {
     type: Date,
     default: null
+},
+
+approvalStatus: {
+    type: String,
+    enum: ["draft", "pending", "approved", "rejected"],
+    default: "draft"
+},
+
+approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+},
+
+approvedAt: {
+    type: Date,
+    default: null
+},
+
+rejectionReason: {
+    type: String,
+    default: null
 }
 }
 }
