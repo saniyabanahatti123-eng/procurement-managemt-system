@@ -240,3 +240,123 @@ export const updatePurchaseOrderStatus = async (req, res) => {
         });
     }
 };
+
+export const updateProcurementTracking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { trackingStatus, actualDeliveryDate } = req.body;
+
+        const allowedStatuses = [
+            "pending",
+            "ordered",
+            "shipped",
+            "delivered"
+        ];
+
+        if (!allowedStatuses.includes(trackingStatus)) {
+            return res.status(400).json({
+                message: "Invalid tracking status"
+            });
+        }
+
+        const purchaseOrder = await PurchaseOrder.findById(id);
+
+        if (!purchaseOrder) {
+            return res.status(404).json({
+                message: "Purchase order not found"
+            });
+        }
+
+        if (purchaseOrder.status === "cancelled") {
+            return res.status(400).json({
+                message:
+                    "Cancelled purchase order cannot be tracked"
+            });
+        }
+
+        const statusOrder = {
+            pending: 0,
+            ordered: 1,
+            shipped: 2,
+            delivered: 3
+        };
+
+        if (
+            statusOrder[trackingStatus] <
+            statusOrder[purchaseOrder.trackingStatus]
+        ) {
+            return res.status(400).json({
+                message:
+                    "Tracking status cannot move backwards"
+            });
+        }
+
+        if (
+            actualDeliveryDate &&
+            isNaN(new Date(actualDeliveryDate).getTime())
+        ) {
+            return res.status(400).json({
+                message: "Invalid actual delivery date"
+            });
+        }
+
+        purchaseOrder.trackingStatus = trackingStatus;
+        purchaseOrder.trackingUpdatedAt = new Date();
+
+        if (trackingStatus === "delivered") {
+            purchaseOrder.actualDeliveryDate =
+                actualDeliveryDate
+                    ? new Date(actualDeliveryDate)
+                    : new Date();
+        }
+
+        await purchaseOrder.save();
+
+        return res.status(200).json({
+            message: "Procurement tracking updated successfully",
+            purchaseOrder
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to update procurement tracking",
+            error: error.message
+        });
+    }
+};
+
+export const getProcurementTracking = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const purchaseOrder = await PurchaseOrder.findById(id)
+            .select(
+                "poNumber status trackingStatus trackingUpdatedAt expectedDeliveryDate actualDeliveryDate vendor"
+            )
+            .populate("vendor");
+
+        if (!purchaseOrder) {
+            return res.status(404).json({
+                message: "Purchase order not found"
+            });
+        }
+
+        return res.status(200).json({
+            tracking: {
+                poNumber: purchaseOrder.poNumber,
+                status: purchaseOrder.status,
+                trackingStatus: purchaseOrder.trackingStatus,
+                trackingUpdatedAt: purchaseOrder.trackingUpdatedAt,
+                expectedDeliveryDate:
+                    purchaseOrder.expectedDeliveryDate,
+                actualDeliveryDate:
+                    purchaseOrder.actualDeliveryDate,
+                vendor: purchaseOrder.vendor
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch procurement tracking",
+            error: error.message
+        });
+    }
+};

@@ -1,12 +1,15 @@
 import express from "express"
-import authorizaRoles from "../middleware/role.middleware.js";
+import authMiddleware from "../middleware/auth.middleware.js";
+import authorizaRoles from "../middleware/role.middleware.js"
 import {
     createPurchaseOrder,
     getAllPurchaseOrders,
     getPurchaseOrderById,
-    updatePurchaseOrderStatus
+    updatePurchaseOrderStatus,
+    updateProcurementTracking,
+    getProcurementTracking
 } from "../controllers/purchaseOrder.controller.js";
-import authMiddleware from "../middleware/auth.middleware.js";
+
 
 const router = express.Router();
 
@@ -32,5 +35,18 @@ router.patch(
     authMiddleware,
   authorizaRoles("procurement", "admin"),
     updatePurchaseOrderStatus
+);
+
+router.patch(
+    "/:id/tracking",
+    authMiddleware,
+    authorizaRoles("procurement", "admin"),
+    updateProcurementTracking
+);
+router.get(
+    "/:id/tracking",
+    authMiddleware,
+    authorizaRoles("requester", "procurement", "approver", "admin"),
+    getProcurementTracking
 );
 export default router;

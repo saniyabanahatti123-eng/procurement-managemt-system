@@ -95,7 +95,22 @@ const purchaseOrderSchema = new mongoose.Schema(
             enum: ["draft", "issued", "cancelled"],
             default: "draft"
         },
+        
+        trackingStatus: {
+    type: String,
+    enum: ["pending", "ordered", "shipped", "delivered"],
+    default: "pending"
+},
 
+trackingUpdatedAt: {
+    type: Date,
+    default: null
+},
+
+actualDeliveryDate: {
+    type: Date,
+    default: null
+},
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
